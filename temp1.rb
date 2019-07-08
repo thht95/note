@@ -608,7 +608,7 @@ c.curriculums.where(:type => 'lecture', :lecture_index => 3).each { |cu|
 }
 
 #api search then save media_uiza_id to curriculums
-url = 'https://edm-api.uiza.co/api/private/v3/media/entity/search?page=1&limit=150&keyword=HanhPT.03'
+url = 'https://edm-api.uiza.co/api/private/v3/media/entity/search?page=1&limit=150&keyword=PhucNH.01'
 res = []
 
 
@@ -617,17 +617,33 @@ RestClient.get(url, { :Authorization => authorization }) { |response, request, r
 
   data = result["data"]
   data.each { |o|
-    entity_na me = o["name"]
-    if entity_name.include?("LoiLD.03")
-      lecture_index = entity_name.gsub("b","").split("_")[1]
+    entity_name = o["name"]
+    if entity_name.include?("PhucNH.01")
+      lecture_index = entity_name.gsub("b","").split("_")[1].to_i
+      
+      #be careful. this is not for all
+      lecture_index += 1
+
       res << lecture_index
 
       p "lecture_index: #{lecture_index}"
+      
       cu = v.curriculums.where(:lecture_index => lecture_index, :type => 'lecture').first
       cu2 = c.curriculums.where(:lecture_index => lecture_index, :type => 'lecture').first
+      l = Library.where(:final_link => cu.url).first
+
+      unless l.blank?
+        if l.media_uiza_id.blank?
+          l.media_uiza_id = o["id"]
+          l.save
+        else
+          p "not update for library"
+        end
+      end
+
       unless cu.blank? 
         if cu.media_uiza_id.blank?
-          # p o["id"]
+          p o["id"]
           cu.update(:media_uiza_id => o["id"])
         end
       else
