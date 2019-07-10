@@ -49,6 +49,8 @@ CSV.open("hanhpt3.csv", "wb") do |f|
   }
 end
 
+
+
 ctp = [['code', 'name', 'version', 'published_at']]
 
 Course.where(:version.ne => 'test').only(:curriculums, :code, :name, :version, :created_at).each { |c|
