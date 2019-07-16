@@ -186,7 +186,8 @@ Course.any_of({ :primary_category_ids.nin => [nil, []]} , {:sub_category_ids.nin
 }
 
 log = 0
-Review.all.each { |r|
+rv_count = Review.where(:created_at.gte => Time.new(2019,6,1)).count
+Review.where(:created_at.gte => Time.new(2019,6,1)).each { |r|
   obj = []
   obj << r.description
   obj << r.rating
@@ -210,7 +211,7 @@ Review.all.each { |r|
 
   ctp << obj
   log += 1 
-  p "#{log}/#{Review.all.count}"
+  p "#{log}/#{rv_count}"
 }
 
 /(\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z|^(0|84|\+84)+(\d{9}|\d{10})$)/i
