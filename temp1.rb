@@ -219,7 +219,7 @@ Review.where(:created_at.gte => Time.new(2019,6,1)).each { |r|
 #write csv
 
 ctp = [["description", "rating", "is_enable", "created_at", "course code", "course name" ,"user name", "user email"]]
-CSV.open("rating_data.csv", "w") do |row|
+CSV.open("percent_complete_data.csv", "w") do |row|
   ctp.each { |c|
     row << c
 
@@ -228,19 +228,62 @@ CSV.open("rating_data.csv", "w") do |row|
 end
 
 b = []
-#read csv
-CSV.foreach("map_uid.csv") do |row|
-  # b << row[1]
-  uid = row[1]
-  u = User.find(uid)
-  if u.blank?
-    p "#{uid} BLANK"  
-  else
-    u.update(:ecommerce_id => row[0])
-    p "#{uid} Update sucdick"
-  end
+
+#logic % complete course
+def logic_percent_complete(oc)
+  count_complete = oc.lectures.where(lecture_ratio: 100).count
+  count_all = oc.lectures.count
+
+  count_complete*100.0/count_all
 end
 
+#read csv
+ctp =[]
+count = 0
+count_user_nil = 0
+count_course_nil = 0
+count_owned_course_nil = 0
+count_success = 0
+CSV.foreach("data2.csv") do |row|
+  count += 1
+  p count
+
+  # b << row[1]
+  u = User.where(:email => row[2]).first
+  u = User.where(:phone_number => row[1]) if u.blank?
+
+  if u.blank?
+    count_user_nil += 1
+    row << "User blank"
+    ctp << row
+    next
+  end
+
+  c = Course.where(:code => row[5]).first
+
+  if c.blank?
+    count_course_nil += 1
+    row << "Course blank"
+    ctp << row
+    next
+  end
+
+  oc = u.courses.where(:course_id => c.id).first
+
+  if oc.blank?
+    row << "Owned course blank"
+    ctp << row
+    count_owned_course_nil += 1
+    next
+  end  
+
+  #logic % complete course
+  row << logic_percent_complete(oc)
+  ctp << row
+  count_success += 1
+end
+
+b = []
 b = b.map { |x| x.first}
 
 customers = Rails.cache.fetch("user_recent", expires_in: 1.days) do
