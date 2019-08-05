@@ -49,7 +49,10 @@ CSV.open("hanhpt3.csv", "wb") do |f|
   }
 end
 
-
+#clear media_uiza_id
+c = Course.where(:alias_name => x).first
+c = Course.where(:code => x).first
+c.curriculums.update_all(:media_uiza_id => false)
 
 ctp = [['code', 'name', 'version', 'published_at']]
 
