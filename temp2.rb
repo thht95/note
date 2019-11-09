@@ -76,9 +76,14 @@ ctp = [["email", "password"]]
   end
 }
 
-top6 = PrimaryCategory.all.take(6)
+top6 = PrimaryCategory.all.take(6) and true
 list_id = top6.map(&:id)
-all_course = Course.where(:primary_category_ids.in => list_id, :version => 'public', :enabled => true, :price.ne => 0).to_a
+top25 = User.where(:email => /accountvip/).take(25)
+top25 = User.where(:email => /accountvip/).skip(25).take(25)
+
+list_course_id = top25[24].courses.pluck(:course_id) and true
+
+all_course = Course.where(:primary_category_ids.in => list_id, :version => 'public', :enabled => true, :price.ne => 0, :id.nin => list_course_id).to_a and true
 all_course.each { |c|
   top25.each { |u|
     u.create_new_owned_course(c)
