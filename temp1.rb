@@ -1,4 +1,3 @@
-
 cu = course.curriculums.where(:title => /#{lecture_name.strip}/i, :type => 'lecture').first
 
 if cu.blank?
@@ -183,14 +182,19 @@ Course.any_of({ :primary_category_ids.nin => [nil, []]} , {:sub_category_ids.nin
   obj << c.code
   obj << c.name
 
+  p count
   count += 1 
+
+
 
   ctp << obj
 }
 
+
+ctp = [["comment", "rating", "is_enable", "day rating", "course code", "course name", "user name", "user email"]]
 log = 0
-rv_count = Review.where(:created_at.gte => Time.new(2019,6,1)).count
-Review.where(:created_at.gte => Time.new(2019,6,1)).each { |r|
+rv_count = Review.where(:created_at.gte => Time.new(2019,1,1), :created_at.lt => Time.new(2019,10,30)).count
+Review.where(:created_at.gte => Time.new(2019,1,1), :created_at.lt => Time.new(2019,9,30)).each { |r|
   obj = []
   obj << r.description
   obj << r.rating
@@ -206,7 +210,7 @@ Review.where(:created_at.gte => Time.new(2019,6,1)).each { |r|
 
   unless r.user.blank?
     obj << r.user.name
-    obj << r.user.email
+    obj << r.user.email 
   else
     obj << ""
     obj << ""
@@ -215,14 +219,10 @@ Review.where(:created_at.gte => Time.new(2019,6,1)).each { |r|
   ctp << obj
   log += 1 
   p "#{log}/#{rv_count}"
-}
-
-/(\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z|^(0|84|\+84)+(\d{9}|\d{10})$)/i
+} and true
 
 #write csv
-
-ctp = [["description", "rating", "is_enable", "created_at", "course code", "course name" ,"user name", "user email"]]
-CSV.open("percent_complete_data.csv", "w") do |row|
+CSV.open("course_id.csv", "w") do |row|
   ctp.each { |c|
     row << c
 
@@ -230,9 +230,12 @@ CSV.open("percent_complete_data.csv", "w") do |row|
   }
 end
 
+/(\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z|^(0|84|\+84)+(\d{9}|\d{10})$)/i
+
+
 b = []
 
-#logic % complete course
+#logic % complete course progress
 def logic_percent_complete(oc)
   count_complete = oc.lectures.where(lecture_ratio: 100).count
   count_all = oc.lectures.count
@@ -336,10 +339,7 @@ list.each { |code|
 
 # download file: 
 # scp -P 2122 rails@sgkelley2.edumall.vn:~/kelley/current/HanhPT03.csv .
-# scp rails@sgservreview.edumall.vn:~/tudemy/current/over400courses.csv
-
-
-
+# scp rails@sgservreview.edumall.vn:~/tudemy/current/ratinggggg.csv
 
 u = User.where(:email => 'huongdannotcainaydi@gmail.com').first
 course = Course.where(:code => 'HanhPT.03').first
@@ -348,16 +348,38 @@ u.create_new_owned_course(course)
 #create cod code
 #openvpn
 
+#10 code - 5 khoa => 2 code => 1 khoa
 #run this on antman
 9.times { |i|
   c = Cod.new
   # c.course_id = "Combo_QuyenVN.01_NgocPTN.01_ThongJ.01"
   c.course_id = '59098730ce4b141e4e43cd16'
-  
-  c.cod = "kcg112"  
+  c.cod = "kodu#{i}kitu"  
   c.expired_date = Time.now + 1.year
-  c.save
+  c.savessss
 }
+
+["5d52b6",
+"046806",
+"7e958c",
+"5441bd",
+"66d66e",
+"48bfc8",
+"33f961",
+"1fd821",
+"4b2a62",
+"4b9a6b"]
+
+
+
+insert into file(file_type, name, status, url, folder_id) values (0, "cailonkhonglacailonvutdi.mp4", 1, "abc.com/cailonkhonglacailonvutdi.mp4", 2);
+insert into folder(name, parent_folder_id) values ("gau gau", 1)
+insert into category(`alias`, `name`) values 
+  ("cong_nghe_thong_tin", "Công nghệ thông tin"),
+  ("ngoai_ngu", "Ngoại ngữ"),
+  ("am_nhac", "Âm nhạc"),
+  ("the_thao_suc_khoe", "Thể thao - sức khỏe")
+  
 
 #run this on jackfruit
 9.times { |i|
@@ -367,8 +389,8 @@ list.each { |i|
   p.method = 'cod'
   p.status = 'success'
   p.cod_version = 'new'
-  p.cod_code = i
-  p.course_id = "Combo_QuyenVN.01_NgocPTN.01_ThongJ.01"
+  p.cod_code = "49435d" 
+  p.course_id = "59098730ce4b141e4e43cd16"
   # p.course_id = '59098730ce4b141e4e43cd16'
   p.save
 }
@@ -439,24 +461,33 @@ all = Library.where(:label_id => l.id).to_a
 
 #retranscode cho 1 so label
 label =Library::Label.where(:name => 'CuongDN.09_0222').first
-all = Library.where(:label_id => label.id, :type => 'video', :state.ne => 'COMPLETED').to_a and true
+all = Library.where(:label_id => label.id, :type => 'video', :state.ne => 'COMPLETED').to_a.take(2) and true
 p all.count
 all.each { |lib|
   key = lib.key
   video_dimensions = {:width=>"1920", :height=>"1080"}    
-  job = LunaServices.generate_job(key, video_dimensions)    
+  job = LunaServices.generate_job(key, video_dimensions)
   result = LunaServices.create_job(job)
   job_id = result['id']
   lib.update(:job_id => job_id)  
   p "update job #{job_id} cho lib #{lib.id}"
 }
 
+lib = Library.where(:created_at.gte => Time.now - 1.day, :job_id => "create_job_fail").first
+
 
 
 #query
 u =User.where("courses" => { "$size" => 1}, "courses" => { "$size" => 2 }).first
-all = User.collection.find({ "courses.15" => { "$exists" => true } }).to_a
+all = User.collection.find({ "courses.1" => { "$exists" => true } }).to_a
 top100 = all.sort_by { |x| -x["courses"].count }.take(100)
+
+#search how many person have a course 
+course = Course.where(:code => 'ThaiCD.02').first and true 
+u = User.where("courses.course_id" => course.id).count
+
+Course.where("curriculums.")
+
 
 ctp = []
 
@@ -805,3 +836,340 @@ listnguoinha = ["Đinh Phương Toàn", "Trần Quang Hợp", "Nguyễn Khắc Q
 puts Benchmark.measure {
   User.count
 }
+
+
+#query data user 
+user_in_2k19 = User.where(:created_at.gte => Time.new(2019,1,1), "courses.course_id" => { "$ne" => nil })
+
+utp = User.where(:created_at.gte => Time.now - 1.months, "courses.course_id" => { "$ne" => nil }).limit(50).pluck(
+  :id,
+  :email,
+  :sign_in_count,
+  :current_sign_in_at,
+  :last_sign_in_at,
+  :current_sign_in_ip,
+  :last_sign_in_ip,
+  :name,
+  :mobile,
+  :avatar,
+  :meta_data
+)
+
+
+ctp = [["id","email","sign_in_count","current_sign_in_at","last_sign_in_at", "current_sign_in_ip", "last_sign_in_ip", "name", "mobile", "avatar", "meta_data", "number of payment", "number of course"]]
+
+count_log = 0
+all_count = utp.count
+
+utp.each { |u|
+  count_log += 1
+  p "#{count_log}/#{all_count}"
+  khong_cai_lon = 1
+  
+  obj = u 
+  obj << Payment.where(:email => u[1]).count 
+  obj << User.find(u[0]).courses.count
+
+  ctp << obj
+}
+
+payments = Payment.where(:created_at.gte => Time.now - 2.month).limit(50).pluck(
+  :id,
+  :created_at,
+  :name,
+  :email,
+  :mobile,
+  :address,
+  :money,
+  :user_id,
+  :course_id,
+  :method,
+  :status
+) and true
+
+ctp = [["id",
+"created_at",
+"name",
+"email",
+"mobile",
+"address",
+"money",
+"user_id",
+"course_id",
+"method",
+"status"]]
+
+
+payments.each { |p|
+  ctp << p
+}
+
+
+
+#spring.jpa:
+#  properties:
+#     hibernate:
+#        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+#        id.new_generator_mappings: false
+#        format_sql: true
+#  hibernate:
+#     ddl-auto: create
+
+1. Chinh lai config db thanh production cua jackfruit     
+2. Chinh lai bien env                                     
+3. Chinh lai config db thanh production cua ares          
+4. Chinh lai data của review (wording)          
+
+Question.where(:question => 'Góp ý của bạn dành cho giảng viên của Edumall').each { |q|
+  # q.metadata["answers"] = ["Giáo trình đầy đủ", "Giải thích chi tiết", "Ngắn gọn, súc tích", "Tốc độ phù hợp", "Áp dụng hiệu quả", "Giảng viên nhiệt tình", "Kỹ năng sư phạm tốt"]
+  # q.metadata["answer"] = ["Thời lượng ngắn", "Chất lượng video", "Cấu trúc khóa học", "Kiến thức chưa chuẩn", "Khối lượng kiến thức ít", "Thiếu ví dụ thực tế"]
+  # q.metadata["answer"] = ["Giảng dạy không hấp dẫn", "Sử dụng ngôn từ khó hiểu", "Không nhiệt tình hỗ trợ", "Lặp đi lặp lại"]
+  q.metadata["answer"] = ["Kiến thức chuyên môn", "Kỹ năng truyền đạt", "Giọng nói khó nghe", "Nói hơi nhanh/chậm"]
+  q.save
+}
+
+#asset_host
+nano /etc/default/unicorn
+
+#file cloud/config-app/src/main/resources/application.yml
+#     cloud/config-app/src/main/resources/application-local.yml
+#edit searchLocations: file:./files-config-repo/
+
+
+curl --location --request POST "https://code.edumall.vn/cod/create" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  --data "cod_code=kodu1kitu"
+
+curl --location --request POST "http://localhost:8081/files/moveToFolder" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  --data "fileId=3&parentFolderId=1"
+
+curl --location --request POST "http://localhost:8081/chapters/" \
+  --header "Content-Type: application/json" \
+  --data '{"title": "", "courseVersionId": 1}'
+
+  curl --location --request PUT "http://localhost:8081/chapters/1" \
+    --header "Content-Type: application/json" \
+    --data '{"title": "neu ngay ay"}'
+
+  curl --location --request POST "http://localhost:8081/folders/move2Folder" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  --data "folderId=4&parentFolderId=2"
+
+curl --location --request DELETE "http://localhost:8081/chapters/28" 
+curl --location --header "Authorization: Bearer 5a5d7b630e1266671b0006ff15707096426118" --request GET "https://sso.edumall.vn/sso/user_info"
+
+  curl --location --request PUT "http://157.230.255.33:8890/api/lms/chapters/849" \
+    --header "Content-Type: application/json" \
+    --data '{"title": "gâu gâu"}'
+
+
+curl -g "http://localhost:8081/api/file/detail?fileId=1"
+
+curl -i -H "Accept: application/json" "localhost:3030/upload{filename: 'tbc_than_tai.jpg', filetype: 'image/jpeg'}" 
+
+select status, count(*) as count from course_version cv 
+join (
+select cv.course_id, max(cv.created_at) created_at from course_version cv
+left join teacher_course tc on tc.course_id = cv.course_id
+left join teacher t on t.id = tc.teacher_id
+left join user u on t.user_id = u.id
+where u.id = 1
+group by cv.course_id) a 
+on a.course_id = cv.course_id and a.created_at = cv.created_at
+group by status 
+limit 1,1;
+
+journalctl -u is-lms-api.service -f
+scp -r root@167.71.202.58:/var/www/html/wp-content/uploads .
+
+#cac buoc import data
+- ssh vao server
+- dump sql: `sudo mysqldump -u wordpress -p wordpress > user.sql`
+- download sql ve may: `scp root@167.71.202.58:/var/www/html/user.sql .`
+- import data vao trong mysql local (dung tool)
+- export data ra file csv `SELECT * INTO OUTFILE 'export.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' ESCAPED BY '\' LINES TERMINATED BY '\n' FROM wp_users;`
+- import data vao lai db mongo
+- move file vao project
+
+CSV.foreach("user.csv") do |row|
+  u = User.where(:email => row[4]).first
+  if u.blank? && u.valid_password?('12345678')
+    u = User.new
+    u.password = '12345678'
+    u.email = row[4]
+    u.username = row[3] 
+    u.name = row[9]
+    u.login_source = "hoptac"
+    u.verified = true
+    u.verified_at = Time.now
+    unless u.save
+      p u.errors
+    else
+      p u.email
+      u.set(:encrypted_password => row[2])
+    end
+  else
+    p "Da ton tai email #{row[1]}."
+  end
+end
+
+CSV.foreach("user.csv") do |row|
+  u = User.where(:email => row[4], :login_source => 'hoptac', :verified_at.gt => Time.now - 1.hour).first
+  if u.present? && u.valid_password?('12345678')
+      u.set(:encrypted_password => row[2])
+  else
+    p "Loi email #{row[4]}."
+  end
+end
+
+
+# select name, id from sub_category;
+
+list.each { |e|
+  sub = SubCategory.where(:name => e[0]).first
+  sub.set(:instr_id => e[1]) unless sub.blank?
+}
+
+curl -u hoadt9:hyp140313 -X GET -H "Content-Type: application/json" https://jira.topica.vn/rest/api/2/issue/createmeta
+
+
+
+
+Kelley => Luna  =>  Vis      =>        Vis      =>       Luna           =>
+
+File      Job      Transcode      Notification          Save job. Noti
+
+Library
+
+
+
+{  
+   "name":"lap--trinh--co--ban",
+   "benefit":"nam bat duoc nguyen ly lap trinh co ban",
+   "target":"co kha nang viet duoc co ban",
+   "requirement":"biet lap trinh co ban",
+   "shortDes":"mo ta tong quat khoa co ban",
+   "longDes":"mo ta dai co ban",
+   "subCategoryId":1,
+   "userId":"10",
+   "thumbnailImage":"http://imagec++",
+   "price":199000,
+   "status":"PUBLISH",
+   "courseCode":"IS34560",
+   "chapters":[  
+      {  
+         "title":"Chương 1",
+         "quizzes":[  
+         ],
+         "lectures":[  
+            {  
+               "title":"bai giang 1",
+               "assets":[  
+                  {  
+                     "asset_type":"VIDEO",
+                     "transcode_url":null,
+                     "file":{  
+                        "fileType":"VIDEO",
+                        "name":"SampleVideo_1280x720_1mb.mp4",
+                        "url":"https://lms-stg-user-upload.s3.ap-southeast-1.amazonaws.com/1567680009953_SampleVideo_1280x720_1mb.mp4",
+                        "objectKey":"1567680009953_SampleVideo_1280x720_1mb.mp4",
+                        "fileExtension":"mp4",
+                        "fileSize":1055736,
+                        "duration":300
+                     }
+                  }
+               ]
+            }
+         ]
+      }
+   ]
+}
+
+code = 'CO678179'
+instr = 'INS682145'
+Course.where(:code => code).first.update(:instructor_code => instr)
+Course.where(:code => code).first.versions.desc(:created_at).first.update(:instructor_code => instr)
+
+
+
+course = ....
+payload = {}
+payload["name"] = course.name
+payload["benefit"] = course.benefit.to_s
+payload["target"] = course.audience.to_s
+payload["requirement"] = course.requirement.to_s
+payload["shortDes"] = course.sub_title
+payload["longDes"] = course.description_editor
+payload["subCategoryId"] = course.sub_categories.first.instr_id
+payload["userId"] = course.user_id
+payload["thumbnailImage"] = course.image
+payload["price"] = course.price
+payload["status"] = course.version.upcase
+payload["courseCode"] = course.code
+payload["kelleyId"] = course.id
+payload["chapters"] = []
+
+Course.withoutQuiz
+
+
+courses = Course.where(:version => 'public', :enabled => true, :code.nin => [/CO/]).to_a
+courses.each { |course|
+  payload  = {}
+  payload["name"] = course.name
+  payload["benefit"] = course.benefit.to_s
+  payload["target"] = course.audience.to_s
+  payload["requirement"] = course.requirement.to_s
+  payload["shortDes"] = course.sub_title
+  payload["longDes"] = course.description_editor
+  payload["subCategoryId"] = course.sub_categories.first.instr_id
+  payload["userId"] = course.user_id
+  payload["thumbnailImage"] = course.image
+  payload["price"] = course.price
+  payload["status"] = course.version.upcase
+  payload["courseCode"] = course.code
+  payload["kelly_id"] = course.id
+  payload["chapters"] = []
+
+  chapters = course.curriculums.where(:type => 'chapter').to_a
+  chapters.each { |chapter|
+    chapter_json =  {}
+    chapter_json["title"] = chapter.title
+    chapter_json["lectures"] = []
+
+    lectures = course.curriculums.where(:type => 'lecture', :chapter_index => chapter.chapter_index).to_a
+    lectures.each { |lecture|
+      lecture_json = {}
+      lecture_json["asset_type"] = "VIDEO"
+      lecture_json["transcode_url"] = lecture.url
+      lecture_json["transcode_url"] = lecture.url
+
+
+    }
+  }
+
+}
+
+
+RestClient.post("#{ENV["IS_DOMAIN"]}/courses/create-full-course", payload.to_json, headers={"Content-Type"=> "application/json"}){  |response, request, result, &block|
+
+}
+
+t = Teacher.new
+Instructor::Student.where(:email => )
+
+t.user_id = user.id
+t.address = item["address"]
+
+unless item["bank_account"].blank?
+  bank_account = item["bank_account"].first
+  t.bank_account_name = bank_account["account_name"]
+  t.bank_account_number = bank_account["102200934"]
+  t.bank_name = bank_account["bank_name"]
+end
+
+t.date_of_birth = item["birthday"]
+t.identification_number = item["cmnd"]
+t.identification_date_receive = item["cmnd_date"]
+t.identification_place_receive = item["cmnd_local"]
+t.tax_identification_number = item["tax_number"]  
