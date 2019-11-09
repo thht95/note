@@ -78,23 +78,19 @@ ctp = [["email", "password"]]
 
 top6 = PrimaryCategory.all.take(6) and true
 list_id = top6.map(&:id)
-top25 = User.where(:email => /accountvip/).take(25)
-top25 = User.where(:email => /accountvip/).skip(25).take(25)
-
-list_course_id = top25[24].courses.pluck(:course_id) and true
+u = User.where(:email => 'accountvip2@edumall.vn').first and true
+list_course_id = u.courses.pluck(:course_id)
+list_course_id.count
 
 all_course = Course.where(:primary_category_ids.in => list_id, :version => 'public', :enabled => true, :price.ne => 0, :id.nin => list_course_id).to_a and true
 all_course.each { |c|
-  top25.each { |u|
-    u.create_new_owned_course(c)
-
-    p u.courses.count
-  }
+  create_new_owned_course(u,c)
+  p u.courses.count
 }
 
-vipaccount.each { |u|
-  u.courses.delete_all
-}
+def create_new_owned_course(u,c)
+  owned_course = u.courses.create(course_id: c.id, created_at: Time.now, type: Constants::OwnedCourseTypes::LEARNING, payment_status: Constants::PaymentStatus::SUCCESS)
+end
 
 all_course = all_course.select { |c| !list.include?(c.id) }.count
 
