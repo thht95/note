@@ -57,3 +57,38 @@ else
     binding.pry
   }
 end   
+
+#generate 50 accounts with random pass
+o = [('a'..'z'), ('A'..'Z'), ('0'..'9')].map(&:to_a).flatten and true
+ctp = [["email", "password"]]
+50.times { |i|
+  u = User.new 
+  u.email = "accountvip#{i+1}@edumall.vn"
+  password = (0...8).map { o[rand(o.length)] }.join
+  u.password = password
+  u.verified = true
+  u.verified_at = Time.now
+  if u.save
+    p "Success #{u.email}"
+    ctp << [u.email, password]
+  else
+    p "Fail #{u.email} - #{u.errors}" 
+  end
+}
+
+top6 = PrimaryCategory.all.take(6)
+list_id = top6.map(&:id)
+all_course = Course.where(:primary_category_ids.in => list_id, :version => 'public', :enabled => true, :price.ne => 0).to_a
+all_course.each { |c|
+  top25.each { |u|
+    u.create_new_owned_course(c)
+
+    p u.courses.count
+  }
+}
+
+vipaccount.each { |u|
+  u.courses.delete_all
+}
+
+all_course = all_course.select { |c| !list.include?(c.id) }.count
