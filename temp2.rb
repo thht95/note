@@ -78,15 +78,20 @@ ctp = [["email", "password"]]
 
 top6 = PrimaryCategory.all.take(6) and true
 list_id = top6.map(&:id)
-u = User.where(:email => 'accountvip2@edumall.vn').first and true
-list_course_id = u.courses.pluck(:course_id)
-list_course_id.count
 
-all_course = Course.where(:primary_category_ids.in => list_id, :version => 'public', :enabled => true, :price.ne => 0, :id.nin => list_course_id).to_a and true
-all_course.each { |c|
-  create_new_owned_course(u,c)
-  p u.courses.count
+50.times { |i|
+  u = User.where(:email => "accountvip#{i+1}@edumall.vn").first and true
+  list_course_id = u.courses.pluck(:course_id) and true
+  p list_course_id.count
+
+  # all_course = Course.where(:primary_category_ids.in => list_id, :version => 'public', :enabled => true, :price.ne => 0, :id.nin => list_course_id).to_a and true
+  # all_course.each { |c|
+  #   create_new_owned_course(u,c)
+  #   p u.courses.count
+  # } and true
+
 }
+
 
 def create_new_owned_course(u,c)
   owned_course = u.courses.create(course_id: c.id, created_at: Time.now, type: Constants::OwnedCourseTypes::LEARNING, payment_status: Constants::PaymentStatus::SUCCESS)
@@ -349,5 +354,49 @@ teachers.each { |id|
       p "Loi gi do roi anh Hoa oi"
       p "#{response.code} - #{response}" 
     end
+  }
+}
+
+all_teacher_ids = Course.where(:version => 'public', :enabled => true).pluck(:user_id).uniq
+
+ctp = [["Teacher Email, Teacher Name", "Thờigian publish khóa đầu tiên", "Số khóa học sở hữu", "Số học viên"]]
+all_teacher_ids.each { |teacher_id|
+  teacher = User.find(teacher_id)
+  course_ids = Course.where(:user_id => teacher_id).pluck(:id)
+  first_time_publish = Course::Version.where(:course_id.in => course_ids, :is_publish => true).pluck(:published_at).compact.sort.first
+
+  obj =  []
+
+  obj << teacher.email
+  obj << teacher.name
+  obj << first_time_publish
+  obj << Course.where(:user_id => teacher_id).count
+  obj << Course.where(:user_id => teacher_id).pluck(:students).sum
+
+  ctp << obj
+}
+
+
+
+
+ctp = [["Course code", "user email", "Question", "answers"]]
+arr.each { |id|
+  all_reviews = Review.where(:item_identifier_ids => id).to_a
+  code = id
+
+  all_reviews.each { |r|
+    email = r.email
+    answers = r.answers
+
+    answers.each { |answer|
+      obj = [code, email]
+      obj << answer.question.question
+      obj << answer.answers.join(', ')
+
+      ctp << obj
+
+      code = ""
+      email = ""
+    }
   }
 }

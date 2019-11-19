@@ -194,7 +194,7 @@ Course.any_of({ :primary_category_ids.nin => [nil, []]} , {:sub_category_ids.nin
 ctp = [["comment", "rating", "is_enable", "day rating", "course code", "course name", "user name", "user email"]]
 log = 0
 rv_count = Review.where(:created_at.gte => Time.new(2019,1,1), :created_at.lt => Time.new(2019,10,30)).count
-Review.where(:created_at.gte => Time.new(2019,1,1), :created_at.lt => Time.new(2019,9,30)).each { |r|
+Review.where(:created_at.gte => Time.new(2019,10,1), :created_at.lt => Time.new(2019,11,1)).each { |r|
   obj = []
   obj << r.description
   obj << r.rating
@@ -222,7 +222,7 @@ Review.where(:created_at.gte => Time.new(2019,1,1), :created_at.lt => Time.new(2
 } and true
 
 #write csv
-CSV.open("course_id.csv", "w") do |row|
+CSV.open("data_rating.csv", "w") do |row|
   ctp.each { |c|
     row << c
 
@@ -336,9 +336,8 @@ list.each { |code|
   end
 }
 
-
 # download file: 
-# scp -P 2122 rails@sgkelley2.edumall.vn:~/kelley/current/HanhPT03.csv .
+# scp -P 2122 rails@sgkelley2.edumall.vn:~/kelley/current/EPS-12735.csv .
 # scp rails@sgservreview.edumall.vn:~/tudemy/current/ratinggggg.csv
 
 u = User.where(:email => 'huongdannotcainaydi@gmail.com').first
@@ -1043,47 +1042,16 @@ File      Job      Transcode      Notification          Save job. Noti
 Library
 
 
+ctp = [["Course code", "User email", "User code"]]
+all.each { |c|
+  obj = [c.code]
+  user = c.user
+  unless user.blank?
+    obj << user.email
+    obj << user.username
+  end
 
-{  
-   "name":"lap--trinh--co--ban",
-   "benefit":"nam bat duoc nguyen ly lap trinh co ban",
-   "target":"co kha nang viet duoc co ban",
-   "requirement":"biet lap trinh co ban",
-   "shortDes":"mo ta tong quat khoa co ban",
-   "longDes":"mo ta dai co ban",
-   "subCategoryId":1,
-   "userId":"10",
-   "thumbnailImage":"http://imagec++",
-   "price":199000,
-   "status":"PUBLISH",
-   "courseCode":"IS34560",
-   "chapters":[  
-      {  
-         "title":"Chương 1",
-         "quizzes":[  
-         ],
-         "lectures":[  
-            {  
-               "title":"bai giang 1",
-               "assets":[  
-                  {  
-                     "asset_type":"VIDEO",
-                     "transcode_url":null,
-                     "file":{  
-                        "fileType":"VIDEO",
-                        "name":"SampleVideo_1280x720_1mb.mp4",
-                        "url":"https://lms-stg-user-upload.s3.ap-southeast-1.amazonaws.com/1567680009953_SampleVideo_1280x720_1mb.mp4",
-                        "objectKey":"1567680009953_SampleVideo_1280x720_1mb.mp4",
-                        "fileExtension":"mp4",
-                        "fileSize":1055736,
-                        "duration":300
-                     }
-                  }
-               ]
-            }
-         ]
-      }
-   ]
+  ctp << obj
 }
 
 code = 'CO678179'
@@ -1092,84 +1060,209 @@ Course.where(:code => code).first.update(:instructor_code => instr)
 Course.where(:code => code).first.versions.desc(:created_at).first.update(:instructor_code => instr)
 
 
+courses = Course.where(:version => 'public', :enabled => true, :code.nin => [/CO/]).to_a and true
+count_succes = 0
+count_fail = 0
 
-course = ....
-payload = {}
-payload["name"] = course.name
-payload["benefit"] = course.benefit.to_s
-payload["target"] = course.audience.to_s
-payload["requirement"] = course.requirement.to_s
-payload["shortDes"] = course.sub_title
-payload["longDes"] = course.description_editor
-payload["subCategoryId"] = course.sub_categories.first.instr_id
-payload["userId"] = course.user_id
-payload["thumbnailImage"] = course.image
-payload["price"] = course.price
-payload["status"] = course.version.upcase
-payload["courseCode"] = course.code
-payload["kelleyId"] = course.id
-payload["chapters"] = []
-
-Course.withoutQuiz
-
-
-courses = Course.where(:version => 'public', :enabled => true, :code.nin => [/CO/]).to_a
 courses.each { |course|
-  payload  = {}
-  payload["name"] = course.name
-  payload["benefit"] = course.benefit.to_s
-  payload["target"] = course.audience.to_s
-  payload["requirement"] = course.requirement.to_s
-  payload["shortDes"] = course.sub_title
-  payload["longDes"] = course.description_editor
-  payload["subCategoryId"] = course.sub_categories.first.instr_id
-  payload["userId"] = course.user_id
-  payload["thumbnailImage"] = course.image
-  payload["price"] = course.price
-  payload["status"] = course.version.upcase
-  payload["courseCode"] = course.code
-  payload["kelly_id"] = course.id
-  payload["chapters"] = []
+  if course.user.instr_id.blank? || course.user.instr_id == 0
+    count_fail += 1
+    p count_fail
+    next
+  end 
 
-  chapters = course.curriculums.where(:type => 'chapter').to_a
-  chapters.each { |chapter|
-    chapter_json =  {}
-    chapter_json["title"] = chapter.title
-    chapter_json["lectures"] = []
+  if !course.user.blank? && !course.sub_categories.blank?
+    payload  = {}
+    payload["name"] = course.name
+    payload["benefit"] = course.benefit.to_s
+    payload["target"] = course.audience.to_s
+    payload["requirement"] = course.requirement.to_s
+    payload["shortDes"] = course.sub_title.blank? ? course.name : course.sub_title
+    payload["longDes"] = course.description_editor
+    payload["subCategoryId"] = course.sub_categories.first.instr_id
+    payload["userId"] = course.user.instr_id
+    payload["thumbnailImage"] = course.image
+    payload["price"] = course.price
+    payload["status"] = "PUBLISHED"
+    payload["courseCode"] = course.code
+    payload["kelly_id"] = course.id
+    payload["chapters"] = []
 
-    lectures = course.curriculums.where(:type => 'lecture', :chapter_index => chapter.chapter_index).to_a
-    lectures.each { |lecture|
-      lecture_json = {}
-      lecture_json["asset_type"] = "VIDEO"
-      lecture_json["transcode_url"] = lecture.url
-      lecture_json["transcode_url"] = lecture.url
+    chapters = course.curriculums.where(:type => 'chapter').to_a
+    chapters.each { |chapter|
+      chapter_json =  {}
+      chapter_json["title"] = chapter.title
+      chapter_json["lectures"] = []
 
+      lectures = course.curriculums.where(:type => 'lecture', :chapter_index => chapter.chapter_index).to_a
+      lectures.each { |lecture|
+        lecture_json = {}
+        lecture_json["title"] = lecture.title
+        lecture_json["assets"] = []
 
+        lecture_asset = {}
+
+        lecture_asset["asset_type"] = "VIDEO"
+        lecture_asset["transcode_url"] = lecture.url
+        lecture_asset["file"] = {
+          "fileType": "VIDEO",
+          "name": lecture.url,
+          "url": lecture.url,
+          "objectKey": "",
+          "fileExtension": "mp4",
+          "fileSize": "0",
+          "duration": lecture.duration
+        }
+
+        lecture_json["assets"] << lecture_asset
+        chapter_json["lectures"] << lecture_json
+      }
+
+      payload["chapters"] << chapter_json
     }
-  }
 
+    RestClient.post("#{ENV["IS_DOMAIN"]}/courses/create-full-course", payload.to_json, headers={"Content-Type"=> "application/json"}){  |response, request, result, &block|
+      if response.code == 200
+        course.update(:instr_id => JSON.parse(response)["id"])
+        count_succes += 1 
+        p "success: #{count_succes}"
+      else
+        count_fail += 1
+        p "fail: #{count_fail}"
+        p "#{course.code} - #{response}"
+      end
+    }
+  else
+    p "fail: #{count_fail}"
+    p "#{course.id} dont have teacher"
+  end
+}
+
+#price uiza
+
+count_all_lectures = 0
+count_lecture_donthave_uiza = 0
+count_lib_not_found = 0
+count_lib_not_have_uiza_id = 0
+list_lib_not_found = []
+
+all = Course.where(:version => 'public', :enabled => true, :created_at.gte => Time.new(2019,1,1)).to_a and true
+all.each { |c| 
+  last_version = c.versions.desc(:created_at).first
+  all_lecture = last_version.curriculums.where(:type => 'lecture').to_a
+  all_media_uiza_id = all_lecture.map(&:media_uiza_id)
+  if !all_media_uiza_id.include?(nil)
+    count_all_lectures += all_lecture.count
+  else
+    all_lecture.each { |lecture|
+      count_all_lectures += 1
+      if lecture.media_uiza_id.blank?
+        count_lecture_donthave_uiza += 1
+        lib = Library.where(:final_link => lecture.url).first
+        if lib.blank?
+          count_lib_not_found += 1 
+          list_lib_not_found << lecture.url
+        else
+          if lib.media_uiza_id.blank?
+            count_lib_not_have_uiza_id += 1
+          end
+          # begin
+          #   c.curriculums.where(:type => 'lecture', :lecture_index => lecture.lecture_index).first.update(:media_uiza_id => lib.media_uiza_id)
+          # rescue
+          #   p "Not found lecture on course"
+          # end
+
+          # last_version.curriculums.where(:type => 'lecture', :lecture_index => lecture.lecture_index).first.update(:media_uiza_id => lib.media_uiza_id)
+        end
+      end
+    }
+  end
+
+  p "#{count_all_lectures} - #{count_lecture_donthave_uiza} - #{count_lib_not_found} - #{count_lib_not_have_uiza_id}"
 }
 
 
-RestClient.post("#{ENV["IS_DOMAIN"]}/courses/create-full-course", payload.to_json, headers={"Content-Type"=> "application/json"}){  |response, request, result, &block|
 
+
+
+all_map =  Instructor.where(:edumall_instructor_id.ne => nil).to_a and true
+count = 0
+all_map.each { |i|
+  teacher = Teacher.where(:user_id => i.edumall_instructor_id).first
+
+  unless teacher.blank?
+
+
+
+  if teacher.blank?
+    # teacher = Teacher.create(:code => i.code)
+    t = Teacher.new
+    t.user_id = i.edumall_instructor_id
+    t.address = i.address
+    t.code = i.code
+    t.phone_number = i.mobile.first
+    t.tax_identification_number = i.tax_number
+    t.contact_email = i.email
+    t.profile = Instructor::Student.where(:id => t.user_id).first.blank? ? "" : 
+
+
+    unless i.bank_account.blank? 
+      bank_account = i.bank_account.first
+
+      t.bank_account_name = bank_account["account_name"]
+      t.bank_account_number = bank_account["account_number"]
+      t.bank_name = bank_account["bank_name"]
+    end
+
+    if i.company_info.blank? || i.company_info.name.blank?
+      t.type = "individual"
+      t.gender = i.gender == "man" ? "1" : "0"
+      t.date_of_birth = i.birthday
+
+      t.identification_number = i.cmnd
+      t.identification_date_receive = i.cmnd_date
+      t.identification_place_receive = i.cmnd_local
+    else
+      t.type = "company"
+      t.company_name = i.company_info.name
+      t.representative = i.company_info.representative
+      t.representative_level = i.company_info.position
+      t.contact_name = i.name
+    end
+
+    
+    if t.save
+      count += 1
+      p "#{count}" 
+    else
+      p "fail #{i}"
+    end
+  end
 }
 
-t = Teacher.new
-Instructor::Student.where(:email => )
+Teacher.all.each { |x|
+  u = x.user
 
-t.user_id = user.id
-t.address = item["address"]
+  next if u.blank?
 
-unless item["bank_account"].blank?
-  bank_account = item["bank_account"].first
-  t.bank_account_name = bank_account["account_name"]
-  t.bank_account_number = bank_account["102200934"]
-  t.bank_name = bank_account["bank_name"]
-end
+  u.phone_number = x.phone
+  
+}
+  ip = u.instructor_profile
 
-t.date_of_birth = item["birthday"]
-t.identification_number = item["cmnd"]
-t.identification_date_receive = item["cmnd_date"]
-t.identification_place_receive = item["cmnd_local"]
-t.tax_identification_number = item["tax_number"]  
+  next if ip.blank?
+
+  x.profile = ip.description
+
+  p x.profile
+
+  x.save
+}
+
+project = EIS AND issuetype = Bug AND status in (Reopened, "TO DO", "Ready to test", "In Progress", NeedInfo, "Ready to review") ORDER BY priority DESC
+
+ssh root@157.230.255.33 'cd /var/www/scripts && ./be_deploy.sh'
+ssh root@206.189.149.24 'cd /var/www/scripts && ./be_deploy.sh'
+
+ALTER TABLE annie.media_jobs MODIFY COLUMN params text
+    CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
